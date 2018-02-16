@@ -4,10 +4,10 @@
 #
 # This is a modified version of the CMakeFile
 # for the project https://github.com/lemire/FastPFor 
-# This file isn't used to run Python bindings,
-# it is only used for debug purposes (i.e., to
-# build unit tests that can be executed separately
-# from Python bindings)
+# This file can be used to 
+#   1) Build a library separately. Then, this library
+#      will be re-used by the Python build process
+#   2) Build and run unit and performance tests.
 #
 cmake_minimum_required(VERSION 2.8.7)
 if (NOT CMAKE_BUILD_TYPE)
@@ -101,9 +101,6 @@ MESSAGE( STATUS "CMAKE_CXX_FLAGS_RELEASE: " ${CMAKE_CXX_FLAGS_RELEASE} )
 MESSAGE( STATUS "CMAKE_C_FLAGS_DEBUG: " ${CMAKE_C_FLAGS_DEBUG} )
 MESSAGE( STATUS "CMAKE_C_FLAGS_RELEASE: " ${CMAKE_C_FLAGS_RELEASE} )
 
-
-
-
 # library target
 include_directories(headers)
 add_library(FastPFor STATIC src/bitpacking.cpp
@@ -123,3 +120,6 @@ target_link_libraries(codecs FastPFor)
 
 add_executable(unit src/unit.cpp)
 target_link_libraries(unit FastPFor)
+
+# Adding a make check target
+add_custom_target(check unit DEPENDS unit)
