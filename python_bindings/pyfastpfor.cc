@@ -107,6 +107,8 @@ PYBIND11_PLUGIN(pyfastpfor) {
 
   m.def("delta1", [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
       uint32_t* buff = input.mutable_data();
+      py::gil_scoped_release l;
+
       Delta::fastDelta(buff, inputSize);
   }, py::arg("input"), py::arg("inputSize"),
     "In-place computation of differences between adjacent numbers.\n\n"
@@ -124,6 +126,8 @@ PYBIND11_PLUGIN(pyfastpfor) {
   m.def("delta4",
     [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
       uint32_t* buff = input.mutable_data();
+      py::gil_scoped_release l;
+
       Delta::deltaSIMD(buff, inputSize);
     }, py::arg("input"), py::arg("inputSize"),
     "In-place computation of differences between numbers that are 4 indices apart.\n"
@@ -142,6 +146,8 @@ PYBIND11_PLUGIN(pyfastpfor) {
 
   m.def("prefixSum1", [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
       uint32_t* buff = input.mutable_data();
+      py::gil_scoped_release l;
+
       Delta::fastinverseDelta2(buff, inputSize);
   }, py::arg("input"), py::arg("inputSize"),
     "In-place inversion of delta1.\n\n"
@@ -159,6 +165,8 @@ PYBIND11_PLUGIN(pyfastpfor) {
   m.def("prefixSum4",
     [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
       uint32_t* buff = input.mutable_data();
+      py::gil_scoped_release l;
+
       Delta::inverseDeltaSIMD(buff, inputSize);
     }, py::arg("input"), py::arg("inputSize"),
     "In-place computation inversion of delta4.\n"
