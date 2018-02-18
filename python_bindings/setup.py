@@ -4,7 +4,7 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 maindir = os.path.join(".", "fastpfor")
 library_file = os.path.join(maindir, "libFastPFor.a")
@@ -70,7 +70,8 @@ class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
         'msvc': ['/EHsc', '/openmp', '/O2'],
-        'unix': ['-O3', '-march=native'],
+        #'unix': ['-O3', '-march=native'],
+        'unix': ['-O0', '-march=native', '-g'],
     }
     link_opts = {
         'unix': [],

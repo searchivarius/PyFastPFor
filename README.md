@@ -1,2 +1,5 @@
 # PyFastPFor
-Python bindings for the fast integer compression library [FastPFor](https://github.com/lemire/FastPFor). Should work through PyPi someday, but currently can be installed only locally.
+Python bindings for the fast integer compression library [FastPFor](https://github.com/lemire/FastPFor). Can be installed locally and vi pip:
+```
+pip install pyfastpfor
+```

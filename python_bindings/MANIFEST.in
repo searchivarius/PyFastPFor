@@ -1,0 +1,11 @@
+include pyfastpfor.cc
+recursive-include ./fastpfor/src *.cpp *.c *.cc 
+recursive-include ./fastpfor/headers *.h
+include README.md
+include requirements.txt
+include LICENSE
+
+global-exclude fastpfor/src/benchbitpacking.cpp
+global-exclude fastpfor/src/unit.cpp
+global-exclude fastpfor/src/codecs.cpp
+

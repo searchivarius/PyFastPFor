@@ -10,7 +10,7 @@ def oneTest(arrSize, maxVal, codecList = ["vbyte", "varintg8iu", "simdbinarypack
   inp = np.array(np.random.randint(0, maxVal, arrSize), dtype = np.uint32).ravel()
   # Fails when we give only arrSize + 1024 as a compressed buffer size, which is super weird,
   # because arrSize + 1024 should be more than enough
-  comp = np.zeros(2 * arrSize + 1024, dtype = np.uint32, order = 'C')
+  comp = np.zeros(1 * arrSize + 1024, dtype = np.uint32, order = 'C')
   unComp = np.zeros(2 * arrSize + 1024, dtype = np.uint32, order = 'C') 
 
   assert(np.all(inp >= 0))
