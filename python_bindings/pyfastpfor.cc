@@ -19,7 +19,7 @@
 
 namespace py = pybind11;
 
-void exportComp(py::module& m);
+void exportCodecs(py::module& m);
 
 using namespace FastPForLib;
 
@@ -83,11 +83,11 @@ PYBIND11_PLUGIN(pyfastpfor) {
     m.attr("__version__") = "dev";
 #endif
 
-  py::module compModule = m.def_submodule("comp", "Contains classes for compression and data differencing.");
+  py::module codecModule = m.def_submodule("codecs", "Codecs class wrapper.");
 
-  exportComp(compModule);
+  exportCodecs(codecModule);
 
-  m.def("getFromName",
+  m.def("getCodec",
     [](const std::string & codecName) {
       // We know that FastPFor will keep this shared pointer alive forever
       // so it is safe just to reference codec
@@ -105,12 +105,81 @@ PYBIND11_PLUGIN(pyfastpfor) {
     "----------\n"
     "    A reference to the codec object");
 
+  m.def("delta1", [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
+      uint32_t* buff = input.mutable_data();
+      Delta::fastDelta(buff, inputSize);
+  }, py::arg("input"), py::arg("inputSize"),
+    "In-place computation of differences between adjacent numbers.\n\n"
+    "Parameters\n"
+    "----------\n"
+    "input: input numpy C-style contiguous array to be uncompressed, e.g.:\n"
+    "     input = numpy.array(range(256), dtype = np.uint32).ravel()\n"
+    "inputSize: a number of integers to process\n"
+    "\n"
+    "Returns\n"
+    "----------\n"
+    "    None"
+  );
+
+  m.def("delta4",
+    [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
+      uint32_t* buff = input.mutable_data();
+      Delta::deltaSIMD(buff, inputSize);
+    }, py::arg("input"), py::arg("inputSize"),
+    "In-place computation of differences between numbers that are 4 indices apart.\n"
+    "Using delta4 and prefixSum4 increases space usage, but processing is faster.\n\n"
+    "Parameters\n"
+    "----------\n"
+    "input: input numpy C-style contiguous array to be uncompressed, e.g.:\n"
+    "     input = numpy.array(range(256), dtype = np.uint32).ravel()\n"
+    "inputSize: a number of integers to process\n"
+    "\n"
+    "Returns\n"
+    "----------\n"
+    "    None"
+  )
+  ;
+
+  m.def("prefixSum1", [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
+      uint32_t* buff = input.mutable_data();
+      Delta::fastinverseDelta2(buff, inputSize);
+  }, py::arg("input"), py::arg("inputSize"),
+    "In-place inversion of delta1.\n\n"
+    "Parameters\n"
+    "----------\n"
+    "input: input numpy C-style contiguous array to be uncompressed, e.g.:\n"
+    "     input = numpy.array(range(256), dtype = np.uint32).ravel()\n"
+    "inputSize: a number of integers to process\n"
+    "\n"
+    "Returns\n"
+    "----------\n"
+    "    None"
+  );
+
+  m.def("prefixSum4",
+    [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
+      uint32_t* buff = input.mutable_data();
+      Delta::inverseDeltaSIMD(buff, inputSize);
+    }, py::arg("input"), py::arg("inputSize"),
+    "In-place computation inversion of delta4.\n"
+    "Using delta4 and prefixSum4 increases space usage, but processing is faster.\n\n"
+    "Parameters\n"
+    "----------\n"
+    "input: input numpy C-style contiguous array to be uncompressed, e.g.:\n"
+    "     input = numpy.array(range(256), dtype = np.uint32).ravel()\n"
+    "inputSize: a number of integers to process\n"
+    "\n"
+    "Returns\n"
+    "----------\n"
+    "    None"
+  );
+
 #ifndef PYBIND11_MODULE
   return m.ptr();
 #endif
 }
 
-void exportComp(py::module& m) {
+void exportCodecs(py::module& m) {
   py::class_<IntegerCODECWrapper>(m, "IntegerCODEC")
   .def("encodeArray", &IntegerCODECWrapper::encodeArray, 
       py::arg("input"), py::arg("inputSize"), 
