@@ -14,7 +14,7 @@ libraries = []
 extra_objects = []
 
 if os.path.exists(library_file):
-    # if we have a prebuilt nmslib library file, use that.
+    # if we have a prebuilt library file, use that.
     extra_objects.append(library_file)
 
 else:
@@ -27,9 +27,9 @@ else:
 
 ext_modules = [
     Extension(
-        'FastPFor',
+        'pyfastpfor',
         source_files,
-        include_dirs=[os.path.join(maindir, "headers")],
+        include_dirs=[maindir, os.path.join(maindir, "headers")],
         libraries=libraries,
         language='c++',
         extra_objects=extra_objects,
@@ -115,7 +115,7 @@ class BuildExt(build_ext):
 
 
 setup(
-    name='PyFastPFor',
+    name='pyfastpfor',
     version=__version__,
     description='Python bindings for the FastPFor library (fast integer compression)',
     author='Leonid Boytsov (Lemire et al. for FastPFor)',
