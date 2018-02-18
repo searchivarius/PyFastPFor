@@ -55,11 +55,13 @@ def has_flag(compiler, flagname):
 def cpp_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
 
-    The c++14 is prefered over c++11 (when it is available).
-    """
-    if has_flag(compiler, '-std=c++14'):
-        return '-std=c++14'
-    elif has_flag(compiler, '-std=c++11'):
+    #The c++14 is prefered over c++11 (when it is available).
+    # This somehow can fail on a Mac with clang
+    #"""
+    #if has_flag(compiler, '-std=c++14'):
+        #return '-std=c++14'
+    #elif has_flag(compiler, '-std=c++11'):
+    if has_flag(compiler, '-std=c++11'):
         return '-std=c++11'
     else:
         raise RuntimeError('Unsupported compiler -- at least C++11 support '
@@ -70,7 +72,7 @@ class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
         'msvc': ['/EHsc', '/openmp', '/O2'],
-        'unix': ['-O3', '-march=native'],
+        'unix': ['-O3', '-march=native', '-std=c99'],
         #'unix': ['-O0', '-march=native', '-g'],
     }
     link_opts = {
