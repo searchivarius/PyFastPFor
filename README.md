@@ -4,7 +4,7 @@
 Python bindings for the fast integer compression library [FastPFor](https://github.com/lemire/FastPFor). Can be installed locally:
 ```
 cd python_bindings
-sudo pip build install
+sudo setup.py build install
 ```
 or via pip:
 ```
