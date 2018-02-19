@@ -13,4 +13,4 @@ pip install pyfastpfor
 Due to some compilation quirks this currently seem to work with GCC only. I will fix it in some not so distant future.
 
 # Documentation
-The library supports all the codes as the original [FastPFor](https://github.com/lemire/FastPFor) library as well as two types of data differencing approaches. The library compresses well only small integers. A common trick to deal with large numbers is to sort them and subsequently to encode the differences. Examples of three common use scenarios are outlined in [this Python notebook](python_bindings/examples.ipynb).
+The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by Feb 2018 as well as two types of data differencing approaches. The library compresses well only small integers. A common trick to deal with large numbers is to sort them and subsequently to encode the differences. Examples of three common use scenarios are outlined in [this Python notebook](python_bindings/examples.ipynb).
