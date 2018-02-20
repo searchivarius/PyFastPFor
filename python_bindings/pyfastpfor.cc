@@ -10,6 +10,7 @@
  */
 
 #include <cstdint>
+#include <iostream>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -104,6 +105,18 @@ PYBIND11_PLUGIN(pyfastpfor) {
     "Returns\n"
     "----------\n"
     "    A reference to the codec object");
+
+  m.def("getCodecList", []() {
+      py::list ret;
+      for (const string& codecId : CODECFactory::allNames()) {
+        ret.append(codecId);
+      }
+      return ret;
+    },
+    "Return a list of available codecs.\n\n"
+    "Returns\n"
+    "----------\n"
+    "A list with codec names");
 
   m.def("delta1", [](py::array_t<uint32_t, py::array::c_style> input, size_t inputSize) -> void {
       uint32_t* buff = input.mutable_data();

@@ -4,7 +4,7 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 
-__version__ = '1.3.1'
+__version__ = '1.3.3'
 
 maindir = os.path.join(".", "fastpfor")
 library_file = os.path.join(maindir, "libFastPFor.a")
@@ -121,9 +121,9 @@ setup(
     name='pyfastpfor',
     version=__version__,
     description='Python bindings for the FastPFor library (fast integer compression)',
-    author='Leonid Boytsov (Lemire et al. for FastPFor)',
+    author='Lemire et al. for FastPFor',
     url='https://github.com/searchivarius/PyFastPFor',
-    long_description="""A research library with integer compression schemes. It is broadly applicable to the compression of arrays of 32-bit integers where most integers are small. The library seeks to exploit SIMD instructions (SSE) whenever possible. This library can decode at least 4 billions of compressed integers per second on most desktop or laptop processors. That is, it can decompress data at a rate of 15 GB/s. This is significantly faster than generic codecs like gzip, LZO, Snappy or LZ4.""",
+    long_description="""Pythong bindings for FastPFor: A research library with integer compression schemes. FastPFor is broadly applicable to the compression of arrays of 32-bit integers where most integers are small. The library seeks to exploit SIMD instructions (SSE) whenever possible. This library can decode at least 4 billions of compressed integers per second on most desktop or laptop processors. That is, it can decompress data at a rate of 15 GB/s. This is significantly faster than generic codecs like gzip, LZO, Snappy or LZ4.""",
     ext_modules=ext_modules,
     install_requires=['pybind11>=2.0', 'numpy'],
     cmdclass={'build_ext': BuildExt},
