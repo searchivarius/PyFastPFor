@@ -22,7 +22,9 @@ Due to some compilation quirks this currently seem to work with GCC only. I will
 
 # Documentation
 
-The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by Feb 2018). To get a list of codecs, use the function ``getCodecList``. Typical light-weight compression works well only for small integers. When integers are large, data differencing is a common trick to make them small. In particular, we often deal with sorted lists of integers, which can be represented by differences by neighboring numbers. 
+The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by Feb 2018). To get a list of codecs, use the function ``getCodecList``. 
+
+Typical light-weight compression does not take context into account and, consequently, works well only for small integers. When integers are large, data differencing is a common trick to make integers small. In particular, we often deal with sorted lists of integers, which can be represented by differences between neighboring numbers. 
 
 The smallest differences (**fine** deltas) are between adjacent numbers. Respective differencing and difference inverting functions are ``delta1'' and ``prefixSum1''.
 
