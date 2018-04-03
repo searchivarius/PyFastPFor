@@ -12,13 +12,18 @@ Daniel Lemire, Leonid Boytsov, Owen Kaser, Maxime Caron, Louis Dionne, Michel Le
 Bindings can be installed locally:
 ```
 cd python_bindings
+pip install -r requirements.txt
 sudo setup.py build install
 ```
 or via pip:
 ```
 pip install pyfastpfor
 ```
-Due to some compilation quirks this currently seem to work with GCC only. I will fix it in some not so distant future.
+Due to some compilation quirks this currently seem to work with GCC only. I will fix it in some not so distant future. You may also need to install Python dev-files. On Ubuntu, for Python 3 you can do it as follows:
+
+```
+sudo apt-get install python3-dev
+```
 
 # Documentation
 
