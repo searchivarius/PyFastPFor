@@ -126,6 +126,7 @@ setup(
     long_description="""Pythong bindings for FastPFor: A research library with integer compression schemes. FastPFor is broadly applicable to the compression of arrays of 32-bit integers where most integers are small. The library seeks to exploit SIMD instructions (SSE) whenever possible. This library can decode at least 4 billions of compressed integers per second on most desktop or laptop processors. That is, it can decompress data at a rate of 15 GB/s. This is significantly faster than generic codecs like gzip, LZO, Snappy or LZ4.""",
     ext_modules=ext_modules,
     install_requires=['pybind11>=2.0', 'numpy'],
+    setup_requires=['pybind11>=2.0', 'numpy'],
     cmdclass={'build_ext': BuildExt},
     test_suite="tests",
     zip_safe=False,
