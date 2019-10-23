@@ -13,7 +13,7 @@ source_files = ['pyfastpfor.cc']
 libraries = []
 extra_objects = []
 
-requirements_list = ['pybind11>=2.0', 'numpy']
+requirements_list = ['pybind11>=2.4', 'numpy']
 
 if os.path.exists(library_file):
     # if we have a prebuilt library file, use that.
