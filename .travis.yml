@@ -40,6 +40,7 @@ before_install:
   virtualenv -p $PY venv
   source venv/bin/activate
   $PIP install --upgrade pip
+  $PIP install -qq setuptools
 
 install:
 - |
