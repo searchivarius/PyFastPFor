@@ -26,6 +26,7 @@ Due to some compilation quirks this currently seem to work with GCC only. I will
 sudo apt-get install python3-dev
 ```
 
+
 # Documentation
 
 The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by Feb 2018. To get a list of codecs, use the function ``getCodecList``. 
