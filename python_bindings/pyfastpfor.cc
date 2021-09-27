@@ -15,8 +15,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
-#include "headers/codecfactory.h"
-#include "headers/deltautil.h"
+#include <fastpfor/codecfactory.h>
+#include <fastpfor/deltautil.h>
 
 namespace py = pybind11;
 
