@@ -10,7 +10,7 @@
      #include <intrin.h>
      #include <iso646.h>
      #include <stdint.h>
-     #define __restrict__
+     #define __restrict__ __restrict
 #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
      /* GCC-compatible compiler, targeting x86/x86-64 */
      #include <x86intrin.h>
@@ -58,6 +58,14 @@ typedef __m256i ymm_t;
 #undef IACA_END
 #define IACA_END
 #endif // not IACA
+
+#if defined(_MSC_VER) && !defined(__clang__)
+static inline int __builtin_ctz(uint32_t x) {
+  unsigned long ret;
+  _BitScanForward(&ret, x);
+  return (int)ret;
+}
+#endif
 
 static inline uint8_t _encoded_length(uint32_t val) {
   if (val < (1 << 8)) {
@@ -226,7 +234,7 @@ uint8_t *svb_insert_scalar_d1_init(uint8_t *keyPtr, uint8_t *dataPtr,
       dataPtr = dataPtrPrev;
 
       // shift keys 2 bits "to the right"
-      uint32_t mask_hi = key & (~0 << shift);
+      uint32_t mask_hi = key & (~0u << shift);
       uint32_t mask_lo = key & ((1 << shift) - 1);
       key = (mask_hi << 2) | mask_lo;
       uint32_t carry_bits, prev_carry_bits = (key & (3 << 8)) >> 8;
@@ -332,7 +340,7 @@ uint8_t *svb_decode_scalar(uint32_t *outPtr, const uint8_t *keyPtr,
   return dataPtr; // pointer to first unused byte after end
 }
 
-static uint8_t lengthTable[256] = {
+static const uint8_t lengthTable[256] = {
     4,  5,  6,  7,  5,  6,  7,  8,  6,  7,  8,  9,  7,  8,  9,  10, 5,  6,  7,
     8,  6,  7,  8,  9,  7,  8,  9,  10, 8,  9,  10, 11, 6,  7,  8,  9,  7,  8,
     9,  10, 8,  9,  10, 11, 9,  10, 11, 12, 7,  8,  9,  10, 8,  9,  10, 11, 9,
@@ -348,7 +356,7 @@ static uint8_t lengthTable[256] = {
     10, 11, 12, 13, 11, 12, 13, 14, 12, 13, 14, 15, 10, 11, 12, 13, 11, 12, 13,
     14, 12, 13, 14, 15, 13, 14, 15, 16};
 
-static uint8_t shuffleTable[256][16] = {
+static const int8_t shuffleTable[256][16] = {
     {0, -1, -1, -1, 1, -1, -1, -1, 2, -1, -1, -1, 3, -1, -1, -1}, // 1111
     {0, 1, -1, -1, 2, -1, -1, -1, 3, -1, -1, -1, 4, -1, -1, -1},  // 2111
     {0, 1, 2, -1, 3, -1, -1, -1, 4, -1, -1, -1, 5, -1, -1, -1},   // 3111
@@ -610,10 +618,10 @@ static uint8_t shuffleTable[256][16] = {
 // static char HighTo32[16] = {8, 9, -1, -1, 10, 11, -1, -1, 12, 13, -1, -1, 14,
 // 15, -1, -1};
 // Byte Order: {0x0706050403020100, 0x0F0E0D0C0B0A0908}
-#ifndef _MSC_VER
-static xmm_t High16To32 = {0xFFFF0B0AFFFF0908, 0xFFFF0F0EFFFF0D0C};
+#if !defined(_MSC_VER) || defined(__clang__)
+static const xmm_t High16To32 = { (long long)0xFFFF0B0AFFFF0908, (long long)0xFFFF0F0EFFFF0D0C};
 #else
-static xmm_t High16To32 = {8,  9,  -1, -1, 10, 11, -1, -1,
+static const xmm_t High16To32 = {8,  9,  -1, -1, 10, 11, -1, -1,
                            12, 13, -1, -1, 14, 15, -1, -1};
 #endif
 
@@ -753,7 +761,7 @@ uint8_t *svb_decode_avx_d1_init(uint32_t *out, uint8_t *__restrict__ keyPtr,
         Data = _mm_cvtepu8_epi16(_mm_lddqu_si128((xmm_t *)(dataPtr + 16)));
         Prev = _write_16bit_avx_d1(out + 16, Data, Prev);
         Data = _mm_cvtepu8_epi16(_mm_loadl_epi64((xmm_t *)(dataPtr + 24)));
-        Prev = _write_16bit_avx_d1(out + 24, Data, Prev);
+        _write_16bit_avx_d1(out + 24, Data, Prev);
         out += 32;
         dataPtr += 32;
 
@@ -780,7 +788,7 @@ uint8_t *svb_decode_avx_d1_init(uint32_t *out, uint8_t *__restrict__ keyPtr,
         Data = _decode_avx((keys & 0x00FF), &dataPtr);
         Prev = _write_avx_d1(out + 24, Data, Prev);
         Data = _decode_avx((keys & 0xFF00) >> 8, &dataPtr);
-        Prev = _write_avx_d1(out + 28, Data, Prev);
+        _write_avx_d1(out + 28, Data, Prev);
 
         out += 32;
       }
@@ -871,7 +879,7 @@ uint8_t *svb_decode_avx_simple(uint32_t *out, uint8_t *__restrict__ keyPtr,
   return svb_decode_scalar(out, keyPtr + consumedkeys, dataPtr, count & 31);
 }
 
-uint64_t svb_encode(uint8_t *out, uint32_t *in, uint32_t count, int delta,
+uint64_t svb_encode(uint8_t *out, const uint32_t *in, uint32_t count, int delta,
                     int type) {
   *(uint32_t *)out = count;          // first 4 bytes is number of ints
   uint8_t *keyPtr = out + 4;         // keys come immediately after 32-bit count

@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <string>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -29,7 +30,7 @@ const char * module_name = "pyfastpfor";
 struct IntegerCODECWrapper {
 public:
   IntegerCODECWrapper(const std::string& codecName) {
-    codec_ = CODECFactory::getFromName(codecName).get();
+    codec_ = factory.getFromName(codecName).get();
   }
   size_t encodeArray(
          py::array_t<uint32_t, py::array::c_style> input, size_t inputSize,
@@ -61,6 +62,7 @@ public:
     return uncompSize;
   }
 private:
+  CODECFactory factory;
   IntegerCODEC* codec_;
 };
 
@@ -108,7 +110,7 @@ PYBIND11_PLUGIN(pyfastpfor) {
 
   m.def("getCodecList", []() {
       py::list ret;
-      for (const string& codecId : CODECFactory::allNames()) {
+      for (const std::string& codecId : CODECFactory().allNames()) {
         ret.append(codecId);
       }
       return ret;

@@ -18,6 +18,9 @@
 namespace FastPForLib {
 
 /**
+ * This is an implementation of the popular Simple16 scheme. It is limited to
+ * 28-bit integers (between 0 and 2^28-1).
+ *
  * If MarkLength is true, than the number of symbols is written
  * in the stream. Otherwise you need to specify it using the nvalue
  * parameter decodeArray.
@@ -373,9 +376,9 @@ void Simple16<MarkLength>::encodeArray(const uint32_t *in, const size_t length,
         assert(which(out) == 14);
     } else {
       if ((*in >> 28) > 0) {
-        std::cerr << "Input's out of range: " << *in << std::endl;
+        fprintf(stderr, "Input's out of range: %u\n", *in);
         throw std::runtime_error(
-            "You tried to apply Simple16 to an incompatible set of integers.");
+            "You tried to apply Simple16 to an incompatible set of integers: they should be in [0,2^28).");
       }
       out[0] = 15;
       NumberOfValuesCoded = 1;
@@ -614,7 +617,7 @@ void Simple16<MarkLength>::encodeArray(const uint32_t *in, const size_t length,
         assert(which(out) == 14);
     } else {
       if ((*in >> 28) > 0) {
-        std::cerr << "Input's out of range: " << *in << std::endl;
+        fprintf(stderr, "Input's out of range: %u\n", *in);
         throw std::runtime_error(
             "You tried to apply Simple16 to an incompatible set of integers.");
       }
@@ -722,11 +725,11 @@ const uint32_t *Simple16<MarkLength>::decodeArray(const uint32_t *in,
   const uint32_t actualvalue =
       MarkLength ? *(in++) : static_cast<uint32_t>(nvalue);
   if (nvalue < actualvalue)
-    std::cerr << " possible overrun" << std::endl;
+    fprintf(stderr, "possible overrun\n");
   nvalue = actualvalue;
 #ifdef STATS
-  cout << "simple16 decode " << len << endl;
-  vector<uint32_t> stats(16, 0);
+  printf("simple16 decode %zu\n", len);
+  std::vector<uint32_t> stats(16, 0);
 #endif
   const uint32_t *const end = out + nvalue;
   while (end > out) {
@@ -739,10 +742,10 @@ const uint32_t *Simple16<MarkLength>::decodeArray(const uint32_t *in,
 #ifdef STATS
   uint32_t sum = std::accumulate(stats.begin(), stats.end(), 0);
   for (uint32_t k = 0; k < stats.size(); ++k) {
-    cout << "simple16 stats[" << k << "]=" << stats[k] * 1.0 / sum << endl;
+    printf("simple16 stats[%u]=%f\n", k, stats[k] * 1.0 / sum);
   }
 #endif
-  ASSERT(in <= endin, in - endin);
+  ASSERT(in <= endin, std::to_string(in - endin));
   return in;
 }
 
@@ -1131,6 +1134,6 @@ void Simple16<MarkLength>::unpack28_1(uint32_t **out, const uint32_t **in) {
   *out = pout + 1;
 }
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* SIMPLE16_H_ */

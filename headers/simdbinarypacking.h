@@ -29,6 +29,9 @@ namespace FastPForLib {
  */
 class SIMDBinaryPacking : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   static const uint32_t CookiePadder = 123456;
   static const uint32_t MiniBlockSize = 128;
   static const uint32_t HowManyMiniBlocks = 16;
@@ -44,8 +47,6 @@ public:
     checkifdivisibleby(length, BlockSize);
     const uint32_t *const initout(out);
     *out++ = static_cast<uint32_t>(length);
-    while (needPaddingTo128Bits(out))
-      *out++ = CookiePadder;
     uint32_t Bs[HowManyMiniBlocks];
     const uint32_t *const final = in + length;
     for (; in + HowManyMiniBlocks * MiniBlockSize <= final;
@@ -87,13 +88,6 @@ public:
   const uint32_t *decodeArray(const uint32_t *in, const size_t /*length*/,
                               uint32_t *out, size_t &nvalue) {
     const uint32_t actuallength = *in++;
-    if (needPaddingTo128Bits(out))
-      throw std::runtime_error("bad initial output align");
-    while (needPaddingTo128Bits(in)) {
-      if (in[0] != CookiePadder)
-        throw std::logic_error("SIMDBinaryPacking alignment issue.");
-      ++in;
-    }
     const uint32_t *const initout(out);
     uint32_t Bs[HowManyMiniBlocks];
     for (; out < initout +
@@ -136,6 +130,6 @@ public:
   std::string name() const { return "SIMDBinaryPacking"; }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* SIMDBINARYPACKING_H_ */

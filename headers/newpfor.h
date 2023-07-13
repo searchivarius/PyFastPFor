@@ -18,6 +18,7 @@
 #include "common.h"
 #include "util.h"
 #include "codecs.h"
+#include "simple16.h"
 
 namespace FastPForLib {
 
@@ -36,6 +37,9 @@ template <uint32_t BlockSizeInUnitsOfPackSize,
           class ExceptionCoder = Simple16<false>>
 class NewPFor : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   enum {
     PFORDELTA_B = 6,
     PFORDELTA_NEXCEPT = 10,
@@ -61,10 +65,7 @@ public:
   virtual const uint32_t *decodeArray(const uint32_t *in, const size_t len,
                                       uint32_t *out, size_t &nvalue);
   virtual std::string name() const {
-    std::ostringstream convert;
-    convert << "NewPFor<" << BlockSizeInUnitsOfPackSize << "," << ecoder.name()
-            << ">";
-    return convert.str();
+    return "NewPFor<" + std::to_string(BlockSizeInUnitsOfPackSize) + "," + ecoder.name() + ">";
   }
   ExceptionCoder ecoder;
   std::vector<uint32_t> exceptionsPositions;
@@ -242,14 +243,15 @@ void NewPFor<BlockSizeInUnitsOfPackSize, ExceptionCoder>::encodeArray(
   }
 #ifdef STATS
   for (uint32_t k = 0; k < 33; ++k)
-    cout << "newpfor b=" << k << " " << stats[k] << endl;
+    printf("newpfor b=%u %u\n", k, stats[k]);
 #endif
   if (nvalue > initnvalue) {
-    std::cerr << " we have a possible buffer overrun" << std::endl;
+    fprintf(stderr, "we have a possible buffer overrun\n");
   }
-  ASSERT(len == static_cast<size_t>(in - initin), len << " " << (in - initin));
+  ASSERT(len == static_cast<size_t>(in - initin),
+      std::to_string(len) + " " + std::to_string(in - initin));
   ASSERT(nvalue == static_cast<size_t>(out - initout),
-         nvalue << " " << (out - initout));
+      std::to_string(nvalue) + " " + std::to_string(out - initout));
 }
 
 template <uint32_t BlockSizeInUnitsOfPackSize, class ExceptionCoder>
@@ -310,15 +312,16 @@ NewPFor<BlockSizeInUnitsOfPackSize, ExceptionCoder>::decodeArray(
   }
 
   if (static_cast<size_t>(out - initout) > nvalue) {
-    std::cerr << "possible buffer overrun" << std::endl;
+    fprintf(stderr, "possible buffer overrun\n");
   }
-  ASSERT(in <= len + initin, in - initin << " " << len);
+  ASSERT(in <= len + initin,
+      std::to_string(in - initin) + " " + std::to_string(len));
 
   nvalue = out - initout;
   assert(nvalue == numBlocks * BlockSize);
   return in;
 }
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
-#endif /* PFOR_H_ */
+#endif /* NEWPFOR_H_ */

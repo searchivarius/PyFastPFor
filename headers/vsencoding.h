@@ -59,10 +59,10 @@ public:
   void bit_writer(uint32_t value, uint32_t bits);
 };
 
-BitsWriter::BitsWriter(uint32_t *out)
+inline BitsWriter::BitsWriter(uint32_t *out)
     : data(out), Fill(0), buffer(0), written(0) {}
 
-void BitsWriter::bit_flush() {
+inline void BitsWriter::bit_flush() {
   if (Fill == 0)
     return;
 
@@ -82,7 +82,7 @@ void BitsWriter::bit_flush() {
   buffer = 0;
   Fill = 0;
 }
-void BitsWriter::bit_writer(uint32_t value, uint32_t bits) {
+inline void BitsWriter::bit_writer(uint32_t value, uint32_t bits) {
   if (bits == 0)
     return;
 
@@ -130,7 +130,7 @@ public:
                                  uint32_t &pSize);
 };
 
-VSEncoding::VSEncoding(uint32_t *lens, uint32_t *zlens, uint32_t size,
+inline VSEncoding::VSEncoding(uint32_t *lens, uint32_t *zlens, uint32_t size,
                        bool cflag)
     :
 
@@ -142,7 +142,7 @@ VSEncoding::VSEncoding(uint32_t *lens, uint32_t *zlens, uint32_t size,
     maxBlk = posszLens[poss_sz - 1];
 }
 
-uint32_t *VSEncoding::compute_OptPartition(uint32_t *seq, uint32_t len,
+inline uint32_t *VSEncoding::compute_OptPartition(uint32_t *seq, uint32_t len,
                                            uint32_t fixCost, uint32_t &pSize) {
   int *SSSP;
   uint32_t i;
@@ -158,7 +158,7 @@ uint32_t *VSEncoding::compute_OptPartition(uint32_t *seq, uint32_t len,
   cost = new uint64_t[len + 1];
 
   if (SSSP == NULL || cost == NULL)
-    std::cerr << "Can't allocate memory" << std::endl;
+    fprintf(stderr, "Can't allocate memory\n");
 
   for (i = 0; i < len + 1U; ++i) {
     SSSP[i] = -1;
@@ -438,7 +438,7 @@ static VSEncoding *__vseblocks =
                    VSEncodingBlocks::VSEBLOCKS_LENS_LEN, false);
 #endif /* USE_BOOST_SHAREDPTR */
 
-void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
+inline void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
                                 uint32_t &size, uint32_t *out) {
   uint32_t i;
   uint32_t j;
@@ -455,7 +455,7 @@ void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
   logs = new uint32_t[len];
 
   if (logs == NULL)
-    std::cerr << "Can't allocate memory" << std::endl;
+    fprintf(stderr, "Can't allocate memory\n");
 
   /* Compute logs of all numbers */
   for (i = 0; i < len; i++)
@@ -469,7 +469,7 @@ void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
   wt = new BitsWriter(out);
 
   if (wt == NULL)
-    std::cerr << "Can't initialize a class" << std::endl;
+    fprintf(stderr, "Can't initialize a class\n");
 
   /* countBlocksLogs[i] says how many blocks uses i bits */
   for (i = 0; i < VSEBLOCKS_LOGS_LEN; i++) {
@@ -508,7 +508,7 @@ void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
       blocks[i] = new uint32_t[countBlocksLogs[i]];
 
       if (blocks[i] == NULL)
-        std::cerr << "Can't allocate memory" << std::endl;
+        fprintf(stderr, "Can't allocate memory\n");
     } else {
       blocks[i] = NULL;
     }
@@ -588,8 +588,8 @@ void VSEncodingBlocks::encodeVS(uint32_t len, const uint32_t *in,
   delete wt;
 }
 
-const uint32_t *VSEncodingBlocks::decodeVS(uint32_t len, const uint32_t *in,
-                                           uint32_t *out, uint32_t *aux) {
+inline const uint32_t *VSEncodingBlocks::decodeVS(uint32_t len,
+                       const uint32_t *in, uint32_t *out, uint32_t *aux) {
   int ntotal;
   uint32_t nblk;
   const uint32_t *addr;
@@ -683,7 +683,7 @@ const uint32_t *VSEncodingBlocks::decodeVS(uint32_t len, const uint32_t *in,
   return addr;
 }
 
-void VSEncodingBlocks::encodeArray(const uint32_t *in, const size_t len,
+inline void VSEncodingBlocks::encodeArray(const uint32_t *in, const size_t len,
                                    uint32_t *out, size_t &nvalue) {
 #ifndef NDEBUG
   const uint32_t *const initout(out);
@@ -707,11 +707,11 @@ void VSEncodingBlocks::encodeArray(const uint32_t *in, const size_t len,
   lout += csize;
   nvalue += csize;
   ++nvalue;
-  ASSERT(nvalue + initout == lout, (lout - initout) << " " << nvalue << " "
-                                                    << csize);
+  ASSERT(nvalue + initout == lout,
+    std::to_string(lout - initout) + " " + std::to_string(nvalue) + " " + std::to_string(csize));
 }
 
-const uint32_t *VSEncodingBlocks::decodeArray(const uint32_t *in,
+inline const uint32_t *VSEncodingBlocks::decodeArray(const uint32_t *in,
 #ifndef NDEBUG
                                               const size_t len, uint32_t *out,
                                               size_t &nvalue) {
@@ -742,7 +742,7 @@ const uint32_t *VSEncodingBlocks::decodeArray(const uint32_t *in,
   const uint32_t *ans = decodeVS(res, in, out, &__tmp[0]);
   assert(initin + len >= in);
   if (initout + orignvalue < out)
-    std::cerr << "possible overrun" << std::endl;
+    fprintf(stderr, "possible overrun\n");
   return ans;
 }
 

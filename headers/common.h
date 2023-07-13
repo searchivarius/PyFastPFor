@@ -31,15 +31,11 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <queue>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -51,9 +47,7 @@
 #include <intrin.h>
 
 #define __attribute__(n)
-#define __restrict__
-#define constexpr inline
-
+#define __restrict__ __restrict
 #endif
 
 #endif /* COMMON_H_ */

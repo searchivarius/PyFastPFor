@@ -2,9 +2,13 @@
  * This code is released under the
  * Apache License Version 2.0 http://www.apache.org/licenses/.
  */
-#ifndef __SSSE3__
+#if !defined(__SSSE3__) && !(defined(_MSC_VER) && defined(__AVX__))
+#ifndef _MSC_VER
 #pragma message                                                                \
     "Disabling varintg8iu due to lack of SSSE3 support, try adding -mssse3 or the equivalent on your compiler"
+#else
+#pragma message("Disabling varintg8iu due to lack of SSSE3 support, try adding -mssse3 or the equivalent on your compiler")
+#endif
 #else
 #ifndef VARINTG8IU_H__
 #define VARINTG8IU_H__
@@ -30,8 +34,6 @@ namespace FastPForLib {
  *
  * This code was originally written by M. Caron and then
  * optimized by D. Lemire.
- *
- *
  *
  */
 class VarIntG8IU : public IntegerCODEC {
@@ -94,8 +96,11 @@ public:
     while (srclength > 0 && nvalue >= 9) {
       compressed_size += encodeBlock(src, srclength, dst, nvalue);
     }
-    // Ouput might not be a multiple of 4 so we make it so
+    // Output might not be a multiple of 4 so we make it so
     nvalue = ((compressed_size + 3) / 4);
+    while (dst < reinterpret_cast<unsigned char*>(out + nvalue)) {
+      *dst++ = 0; // clear padding bytes
+    }
   }
 
   const uint32_t *decodeArray(const uint32_t *in, const size_t length,
@@ -193,6 +198,9 @@ public:
         written++;
       }
     }
+    while (written < 9) {
+      dest[written++] = 0; // clear padding bytes
+    }
     dest += 9;
     dstlength -= 9;
     return 9;
@@ -207,7 +215,7 @@ private:
   }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif // VARINTG8IU_H__
-#endif //__SSE3__
+#endif // __SSSE3__

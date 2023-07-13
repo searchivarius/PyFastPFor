@@ -41,6 +41,9 @@ namespace FastPForLib {
  */
 class PFor : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   enum {
     BlockSizeInUnitsOfPackSize = 4,
     PACKSIZE = 32,
@@ -307,12 +310,10 @@ public:
   }
 
   virtual std::string name() const {
-    std::ostringstream convert;
-    convert << "PFor";
-    return convert.str();
+    return "PFor";
   }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* PFOR_H_ */

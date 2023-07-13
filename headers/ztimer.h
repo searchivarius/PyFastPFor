@@ -3,8 +3,8 @@
  * Apache License Version 2.0 http://www.apache.org/licenses/.
  */
 
-#ifndef ZTIMER
-#define ZTIMER
+#ifndef ZTIMER_H_
+#define ZTIMER_H_
 
 #include "common.h"
 
@@ -30,7 +30,7 @@ struct qpc_clock {
   typedef std::chrono::time_point<qpc_clock, duration> time_point;
   static time_point now() {
     static bool isInited = false;
-    static LARGE_INTEGER frequency = {0, 0};
+    static LARGE_INTEGER frequency = {{0, 0}};
     if (!isInited) {
       if (QueryPerformanceFrequency(&frequency) == 0) {
         throw std::logic_error("QueryPerformanceCounter not supported: " +
@@ -119,6 +119,6 @@ public:
 
 #endif
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
-#endif
+#endif /* ZTIMER_H_ */

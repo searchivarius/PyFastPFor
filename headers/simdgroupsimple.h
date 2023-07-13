@@ -17,17 +17,17 @@ namespace FastPForLib {
 /**
  * This is an implementation of the compression algorithm SIMD-GroupSimple,
  * which was proposed in Section 4 of the following paper:
- * 
+ *
  * W. X. Zhao, X. Zhang, D. Lemire, D. Shan, J. Nie, H. Yan, and J. Wen.
  * A general simd-based approach to accelerating compression algorithms.
  * ACM Trans. Inf. Syst., 33(3), 2015.
  * http://arxiv.org/abs/1502.01916
- * 
+ *
  * Implemented by Patrick Damme,
- * https://wwwdb.inf.tu-dresden.de/our-group/team/patrick-damme . 
- * 
+ * https://wwwdb.inf.tu-dresden.de/our-group/team/patrick-damme .
+ *
  * We provide two variants of the compression part of the algorithm.
- * 
+ *
  * The original variant
  * ====================
  * The first variant closely follows the original algorithm as described in the
@@ -38,27 +38,27 @@ namespace FastPForLib {
  * However, our implementation differs from the paper in some minor points, for
  * instance, we directly look up the mask used in the pattern selection
  * algorithm instead of calculating it from a looked up bit width.
- * 
+ *
  * The variant using a quad max ring buffer
  * ========================================
  * The second variant is based on the original description, but uses a ring
  * buffer instead of an array for the (pseudo) quad max values to reduce the
  * size of the temporary data during the compression. More details on this can
  * be found in Section 3.2.3 of the following paper:
- * 
+ *
  * P. Damme, D. Habich, J. Hildebrandt, and W. Lehner. Lightweight data
  * compression algorithms: An experimental survey (experiments and analyses).
  * In Proceedings of the 20th International Conference on Extending Database
  * Technology, EDBT 2017.
  * http://openproceedings.org/2017/conf/edbt/paper-146.pdf
- * 
+ *
  * The template parameter useRingBuf determines which variant is used:
  * - false: original variant
  * - true: the variant with the ring buffer
  * Both variants use the same packing routines and the same decompression
  * algorithm. Our experiments suggest that the variant with the ring buffer is
  * faster than the original algorithm for small bit widths.
- * 
+ *
  * Compressed data format
  * ======================
  * As described in the original paper, the compressed data consists of two
@@ -92,7 +92,7 @@ namespace FastPForLib {
  * To sum up: For maximum performance use SIMDGroupSimple<false, false> or
  * SIMDGroupSimple<true, true>; to verify that the two variants really produce
  * the same data, use the same value for pessimisticGap.
- * 
+ *
  * Further assumptions
  * ===================
  * Finally, this implementation assumes that the number of 32-bit integers to
@@ -102,6 +102,9 @@ namespace FastPForLib {
 template<bool useRingBuf, bool pessimisticGap>
 class SIMDGroupSimple : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   // Tell CompositeCodec that this implementation can only handle input sizes
   // which are multiples of four.
   static const uint32_t BlockSize = 4;
@@ -153,11 +156,11 @@ public:
     // Since we have to produce exactly one compressed vector anyway, we can
     // use the highest bit width allowing us to pack all n values.
     const unsigned b = 32 / n;
-    __m128i comprBlock = _mm_load_si128(in++);
+    __m128i comprBlock = _mm_loadu_si128(in++);
     for (size_t k = 1; k < n; k++)
       comprBlock = _mm_or_si128(comprBlock,
-                                _mm_slli_epi32(_mm_load_si128(in++), k * b));
-    _mm_store_si128(out++, comprBlock);
+                                _mm_slli_epi32(_mm_loadu_si128(in++), k * b));
+    _mm_storeu_si128(out++, comprBlock);
   }
 
   /**
@@ -167,129 +170,129 @@ public:
    */
 
   inline static __m128i unrolledPacking_32_1(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  1));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  2));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  3));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  4));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  5));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  6));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  7));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  8));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  9));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 10));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 11));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 12));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 13));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 14));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 15));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 16));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 17));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 18));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 19));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 20));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 21));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 22));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 23));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 25));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 26));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 27));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 28));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 29));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 30));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 31));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  1));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  2));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  3));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  4));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  5));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  6));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  7));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  8));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  9));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 10));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 11));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 12));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 13));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 14));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 15));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 16));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 17));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 18));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 19));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 20));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 21));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 22));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 23));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 25));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 26));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 27));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 28));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 29));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 30));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 31));
     return res;
   }
 
   inline static __m128i unrolledPacking_16_2(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  2));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  4));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  6));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  8));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 10));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 12));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 14));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 16));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 18));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 20));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 22));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 26));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 28));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 30));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  2));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  4));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  6));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  8));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 10));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 12));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 14));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 16));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 18));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 20));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 22));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 26));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 28));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 30));
     return res;
   }
 
   inline static __m128i unrolledPacking_10_3(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  3));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  6));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  9));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 12));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 15));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 18));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 21));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 27));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  3));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  6));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  9));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 12));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 15));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 18));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 21));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 27));
     return res;
   }
 
   inline static __m128i unrolledPacking_8_4(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  4));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  8));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 12));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 16));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 20));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 28));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  4));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  8));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 12));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 16));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 20));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 28));
     return res;
   }
 
   inline static __m128i unrolledPacking_6_5(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  5));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 10));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 15));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 20));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 25));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  5));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 10));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 15));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 20));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 25));
     return res;
   }
 
   inline static __m128i unrolledPacking_5_6(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  6));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 12));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 18));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  6));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 12));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 18));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
     return res;
   }
 
   inline static __m128i unrolledPacking_4_8(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++),  8));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 16));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 24));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++),  8));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 16));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 24));
     return res;
   }
 
   inline static __m128i unrolledPacking_3_10(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 10));
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 20));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 10));
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 20));
     return res;
   }
 
   inline static __m128i unrolledPacking_2_16(const __m128i *&in) {
-    __m128i res = _mm_load_si128(in++);
-    res = _mm_or_si128(res, _mm_slli_epi32(_mm_load_si128(in++), 16));
+    __m128i res = _mm_loadu_si128(in++);
+    res = _mm_or_si128(res, _mm_slli_epi32(_mm_loadu_si128(in++), 16));
     return res;
   }
 
   inline static __m128i unrolledPacking_1_32(const __m128i *&in) {
-    return _mm_load_si128(in++);
+    return _mm_loadu_si128(in++);
   }
 
   /**
@@ -298,7 +301,7 @@ public:
    */
   inline static void comprCompleteBlock(const uint8_t &n, const __m128i *&in,
                                         __m128i *&out) {
-    __m128i res;
+    __m128i res = _mm_setzero_si128();
 
     // In the following, b means the bit width.
 
@@ -335,7 +338,7 @@ public:
         break;
     }
 
-    _mm_store_si128(out++, res);
+    _mm_storeu_si128(out++, res);
   }
 
   /**
@@ -344,15 +347,15 @@ public:
    * function is called at most once per array to decompress. Hence, top
    * efficiency is not that crucial here.
    */
-  inline static void decomprIncompleteBlock(const uint8_t &n, 
+  inline static void decomprIncompleteBlock(const uint8_t &n,
                                             const __m128i *&in,
                                             __m128i *&out) {
     // We choose the bit width consistent with comprIncompleteBlock().
     const unsigned b = 32 / n;
     const __m128i mask = _mm_set1_epi32((static_cast<uint64_t>(1) << b) - 1);
-    const __m128i comprBlock = _mm_load_si128(in++);
+    const __m128i comprBlock = _mm_loadu_si128(in++);
     for (size_t k = 0; k < n; k++)
-      _mm_store_si128(out++,
+      _mm_storeu_si128(out++,
                       _mm_and_si128(_mm_srli_epi32(comprBlock, k * b), mask));
   }
 
@@ -365,137 +368,137 @@ public:
   inline static void unrolledUnpacking_32_1(const __m128i &comprBlock,
                                             __m128i *&out) {
     const __m128i mask = _mm_set1_epi32(1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  1), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  2), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  3), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  5), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  7), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  9), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 11), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 13), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 14), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 17), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 19), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 21), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 22), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 23), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 25), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 26), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 27), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 29), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 30), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 31), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  1), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  2), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  3), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  5), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  7), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  9), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 11), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 13), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 14), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 17), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 19), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 21), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 22), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 23), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 25), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 26), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 27), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 29), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 30), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 31), mask));
   }
 
   inline static void unrolledUnpacking_16_2(const __m128i &comprBlock,
                                             __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 2) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock     , mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  2), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 14), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 22), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 26), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 30), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock     , mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  2), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 14), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 22), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 26), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 30), mask));
   }
 
   inline static void unrolledUnpacking_10_3(const __m128i &comprBlock,
                                             __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 3) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock     , mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  3), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  9), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 21), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 27), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock     , mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  3), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  9), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 21), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 27), mask));
   }
 
   inline static void unrolledUnpacking_8_4(const __m128i &comprBlock,
                                            __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 4) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  4), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 28), mask));
   }
 
   inline static void unrolledUnpacking_6_5(const __m128i &comprBlock,
                                            __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 5) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  5), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 25), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  5), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 15), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 25), mask));
   }
 
   inline static void unrolledUnpacking_5_6(const __m128i &comprBlock,
                                            __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 6) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  6), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 12), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 18), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
   }
 
   inline static void unrolledUnpacking_4_8(const __m128i &comprBlock,
                                            __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 8) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock,  8), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 24), mask));
   }
 
   inline static void unrolledUnpacking_3_10(const __m128i &comprBlock,
                                             __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 10) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 10), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 20), mask));
   }
 
   inline static void unrolledUnpacking_2_16(const __m128i &comprBlock,
                                             __m128i *&out) {
     const __m128i mask = _mm_set1_epi32((static_cast<uint32_t>(1) << 16) - 1);
-    _mm_store_si128(out++, _mm_and_si128(               comprBlock,      mask));
-    _mm_store_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
+    _mm_storeu_si128(out++, _mm_and_si128(               comprBlock,      mask));
+    _mm_storeu_si128(out++, _mm_and_si128(_mm_srli_epi32(comprBlock, 16), mask));
   }
 
   inline static void unrolledUnpacking_1_32(const __m128i &comprBlock,
                                             __m128i *&out) {
-    _mm_store_si128(out++, comprBlock);
+    _mm_storeu_si128(out++, comprBlock);
   }
 
   /**
@@ -504,7 +507,7 @@ public:
    */
   inline static void decomprCompleteBlock(const uint8_t &n,const __m128i *&in,
                                           __m128i *&out) {
-    const __m128i comprBlock = _mm_load_si128(in++);
+    const __m128i comprBlock = _mm_loadu_si128(in++);
 
     switch (n) {
       case 32: // b = 1
@@ -582,7 +585,7 @@ public:
         // directly instead of calculating it from a looked up bit width.
         const uint32_t mask = tableMask[i];
         pos = 0;
-        const size_t maxPos = min(static_cast<size_t>(n), l);
+        const size_t maxPos = std::min(static_cast<size_t>(n), l);
         while (pos < maxPos && quadMaxArray[j + pos] <= mask)
           pos++;
         if (pos == maxPos)
@@ -627,6 +630,9 @@ public:
     __m128i *outDataArea128 = reinterpret_cast<__m128i *>(initOutSelArea8 +
         countSelArea8 + sizeof(uint8_t) + countPadBytes);
     const __m128i *const initOutDataArea128 = outDataArea128;
+    uint8_t* pad8 = (uint8_t*)outDataArea128 - countPadBytes;
+    while (pad8 < (uint8_t*)outDataArea128)
+        *pad8++ = 0; // clear padding bytes
 
     const __m128i *in128 = reinterpret_cast<const __m128i *>(in);
 
@@ -717,7 +723,7 @@ public:
     while (in128 < endIn128) {
       // Step 1: Refill the quad max ring buffer.
       const size_t countRemainingIn128 = static_cast<size_t>(endIn128 - in128);
-      const size_t rbSizeToReach = min(rbMaxSize, countRemainingIn128);
+      const size_t rbSizeToReach = std::min(rbMaxSize, countRemainingIn128);
       for (; rbSize < rbSizeToReach; rbSize++) {
         const uint32_t *const in32 =
             reinterpret_cast<const uint32_t *>(in128 + rbSize);
@@ -733,7 +739,7 @@ public:
         n = tableNum[i];
         const uint32_t mask = tableMask[i];
         pos = 0;
-        const size_t maxPos = min(static_cast<size_t>(n), rbSize);
+        const size_t maxPos = std::min(static_cast<size_t>(n), rbSize);
         while (pos < maxPos && quadMaxRb[(rbPos + pos) % rbMaxSize] <= mask)
           pos++;
         if (pos == maxPos)
@@ -791,8 +797,8 @@ public:
           sizeof(uint8_t) + countPadBytes_woGap);
       if (outDataArea128_woGap != outDataArea128_wGap)
         for (unsigned i = 0; i < countDataArea128; i++)
-          _mm_store_si128(outDataArea128_woGap + i,
-                          _mm_load_si128(initOutDataArea128_wGap + i));
+          _mm_storeu_si128(outDataArea128_woGap + i,
+                          _mm_loadu_si128(initOutDataArea128_wGap + i));
     }
 
     // Write some meta data to the header.
@@ -814,20 +820,15 @@ public:
   void encodeArray(const uint32_t *in, const size_t len, uint32_t *out,
                    size_t &nvalue) {
     checkifdivisibleby(len, BlockSize);
-    if (needPaddingTo128Bits(in))
-      throw std::runtime_error("the input buffer must be aligned to 16 bytes");
-    
+
     if (useRingBuf)
       encodeArrayInternal_wRingBuf(in, len, out, nvalue);
     else
       encodeArrayInternal_woRingBuf(in, len, out, nvalue);
   }
 
-  const uint32_t *decodeArray(const uint32_t *in, const size_t len,
+  const uint32_t *decodeArray(const uint32_t *in, const size_t,
                               uint32_t *out, size_t &nvalue) {
-    if (needPaddingTo128Bits(out))
-      throw std::runtime_error("the output buffer must be aligned to 16 bytes");
-    
     // The start of the header.
     const uint32_t *const inHeader32 = in;
     nvalue = inHeader32[0];
@@ -867,11 +868,7 @@ public:
   }
 
   virtual std::string name() const {
-    std::ostringstream convert;
-    convert << "SIMDGroupSimple";
-    if (useRingBuf)
-      convert << "_RingBuf";
-    return convert.str();
+    return useRingBuf ? "SIMDGroupSimple_RingBuf" : "SIMDGroupSimple";
   }
 };
 
@@ -893,6 +890,6 @@ const uint32_t SIMDGroupSimple<useRingBuf, pessimisticGap>::tableMask[] = {
   (static_cast<uint64_t>(1) << 32) - 1,
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* SIMDGROUPSIMPLE_H_ */
