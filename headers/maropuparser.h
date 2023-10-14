@@ -9,6 +9,7 @@
 #define MAROPUPARSER_H_
 
 #include "common.h"
+#include <iostream>
 
 namespace FastPForLib {
 
@@ -74,6 +75,6 @@ public:
   }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* MAROPUPARSER_H_ */

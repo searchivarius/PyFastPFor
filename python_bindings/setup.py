@@ -21,7 +21,8 @@ if os.path.exists(library_file):
 
 else:
     # Otherwise build all the files here directly (excluding test files)
-    exclude_files = set("""unit.cpp codecs.cpp""".split())
+    exclude_files = set("""unit.cpp codecs.cpp partitionbylength.cpp inmemorybenchmark.cpp gapstats.cpp
+                           entropy.cpp csv2maropu.cpp benchbitpacking.cpp""".split())
 
     for root, subdirs, files in os.walk(os.path.join(maindir, "src")):
         source_files.extend(os.path.join(root, f) for f in files
@@ -57,7 +58,7 @@ def has_flag(compiler, flagname):
 def cpp_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
 
-    #The c++14 is prefered over c++11 (when it is available).
+    #The c++14 is preferred over c++11 (when it is available).
     # This somehow can fail on a Mac with clang
     #"""
     #if has_flag(compiler, '-std=c++14'):

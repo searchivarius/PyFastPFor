@@ -5,6 +5,7 @@
  * (c) Daniel Lemire, http://lemire.me/en/
  */
 #include <memory>
+#include <iostream>
 #include <iomanip>
 #include <time.h>
 #include "codecfactory.h"
@@ -18,7 +19,8 @@ using namespace std;
 using namespace FastPForLib;
 
 int main() {
-  vector<shared_ptr<IntegerCODEC>> myalgos = CODECFactory::allSchemes();
+  CODECFactory factory;
+  vector<shared_ptr<IntegerCODEC>> myalgos = factory.allSchemes();
   for (uint32_t b = 0; b <= 28; ++b) {
 
     cout << "testing... b = " << b << endl;

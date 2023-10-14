@@ -103,17 +103,18 @@ MESSAGE( STATUS "CMAKE_C_FLAGS_RELEASE: " ${CMAKE_C_FLAGS_RELEASE} )
 
 # library target
 include_directories(headers)
-add_library(FastPFor STATIC src/bitpacking.cpp
-                                src/bitpacking.cpp
-                                src/bitpackingaligned.cpp
-                                src/bitpackingunaligned.cpp
-                                src/horizontalbitpacking.cpp
-                                src/simdunalignedbitpacking.cpp
-                                src/simdbitpacking.cpp
-                                src/varintdecode.c
-                                src/streamvbyte.c
-								${HEADERS}
-								)
+add_library(FastPFor STATIC
+    src/bitpacking.cpp
+    src/bitpackingaligned.cpp
+    src/bitpackingunaligned.cpp
+    src/codecfactory.cpp
+    src/horizontalbitpacking.cpp
+    src/simdunalignedbitpacking.cpp
+    src/simdbitpacking.cpp
+    src/varintdecode.c
+    src/streamvbyte.c
+	${HEADERS}
+	)
 
 add_executable(codecs src/codecs.cpp)
 target_link_libraries(codecs FastPFor)

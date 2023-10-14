@@ -6,6 +6,10 @@ include requirements.txt
 include LICENSE
 
 global-exclude fastpfor/src/benchbitpacking.cpp
+global-exclude fastpfor/src/csv2maropu.cpp
+global-exclude fastpfor/src/entropy.cpp
+global-exclude fastpfor/src/gapstats.cpp
+global-exclude fastpfor/src/inmemorybenchmark.cpp
+global-exclude fastpfor/src/partitionbylength.cpp
 global-exclude fastpfor/src/unit.cpp
 global-exclude fastpfor/src/codecs.cpp
-

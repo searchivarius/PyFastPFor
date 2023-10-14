@@ -89,9 +89,7 @@ public:
   }
 
   std::string name() const {
-    std::ostringstream convert;
-    convert << "BinaryPacking" << MiniBlockSize;
-    return convert.str();
+    return "BinaryPacking" + std::to_string(MiniBlockSize);
   }
 };
 
@@ -102,12 +100,15 @@ public:
 template <uint32_t MiniBlockSize>
 class FastBinaryPacking : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   static const uint32_t HowManyMiniBlocks = 4;
   static const uint32_t BlockSize = HowManyMiniBlocks * MiniBlockSize;
   static const uint32_t bits32 = 8; // 8 > gccbits(32);
 
   void encodeArray(const uint32_t *in, const size_t length, uint32_t *out,
-                   size_t &nvalue) {
+                   size_t &nvalue) override {
     checkifdivisibleby(length, BlockSize);
     const uint32_t *const initout(out);
     *out++ = static_cast<uint32_t>(length);
@@ -136,7 +137,7 @@ public:
   }
 
   const uint32_t *decodeArray(const uint32_t *in, const size_t /*length*/,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t &nvalue) override {
     const uint32_t actuallength = *in++;
     const uint32_t *const initout(out);
     uint32_t Bs[HowManyMiniBlocks];
@@ -164,22 +165,23 @@ public:
     return in;
   }
 
-  std::string name() const {
-    std::ostringstream convert;
-    convert << "FastBinaryPacking" << MiniBlockSize;
-    return convert.str();
+  std::string name() const override {
+    return "FastBinaryPacking" + std::to_string(MiniBlockSize);
   }
 };
 
 // A simpler version of FastBinaryPacking32. (For sanity testing.)
 class BP32 : public IntegerCODEC {
 public:
+  using IntegerCODEC::encodeArray;
+  using IntegerCODEC::decodeArray;
+
   static const uint32_t MiniBlockSize = 32;
   static const uint32_t HowManyMiniBlocks = 4;
   static const uint32_t BlockSize = HowManyMiniBlocks * MiniBlockSize;
 
   void encodeArray(const uint32_t *in, const size_t length, uint32_t *out,
-                   size_t &nvalue) {
+                   size_t &nvalue) override {
     checkifdivisibleby(length, BlockSize);
     const uint32_t *const initout(out);
     *out++ = static_cast<uint32_t>(length);
@@ -198,7 +200,7 @@ public:
   }
 
   const uint32_t *decodeArray(const uint32_t *in, const size_t /*length*/,
-                              uint32_t *out, size_t &nvalue) {
+                              uint32_t *out, size_t &nvalue) override {
     const uint32_t actuallength = *in++;
     const uint32_t *const initout(out);
     uint32_t Bs[HowManyMiniBlocks];
@@ -217,7 +219,7 @@ public:
     return in;
   }
 
-  std::string name() const { return "BP32"; }
+  std::string name() const override { return "BP32"; }
 };
 
 /**
@@ -315,22 +317,17 @@ public:
   }
 
   std::string name() const {
-    std::ostringstream convert;
-    convert << "ByteAlignedPacking" << MiniBlockSize;
-    if (prescan or align) {
-      convert << "<";
-      if (prescan) {
-        convert << "prescan";
-        if (align)
-          convert << ",aligned";
-      } else if (align)
-        convert << "aligned";
-      convert << ">";
-    }
-    return convert.str();
+    if (!prescan && !align)
+      return "ByteAlignedPacking" +std::to_string(MiniBlockSize);
+    else if (prescan && align)
+      return "ByteAlignedPacking" + std::to_string(MiniBlockSize) + "<prescan,aligned>";
+    else if (prescan)
+      return "ByteAlignedPacking" + std::to_string(MiniBlockSize) + "<prescan>";
+    else if (align)
+      return "ByteAlignedPacking" + std::to_string(MiniBlockSize) + "<aligned>";
   }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
 #endif /* BLOCKPACKING_H_ */

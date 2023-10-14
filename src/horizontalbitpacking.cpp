@@ -11,7 +11,7 @@
  * Willhalm T, Popovici N, Boshmaf Y, Plattner H, Zeier A, Schaffner J.
  * SIMD-scan: ultra fast in-memory table scan using on-chip vector processing
  * units.
- * Proceedings of the VLDB Endowment Aug 2009; 2(1):385Ð394.
+ * Proceedings of the VLDB Endowment Aug 2009; 2(1):385-394.
  *
  * Optimized for a recent Intel core i7 processor by D. Lemire on Oct. 2012.
  */
@@ -19,8 +19,6 @@
 #include "horizontalbitpacking.h"
 
 namespace FastPForLib {
-
-using namespace std;
 
 static void SIMD_nullunpacker32(const uint8_t *, uint32_t *out) {
   memset(out, 0, 32 * 4 * 4);
@@ -52,16 +50,16 @@ j));
         ca=_mm_and_si128(ca,andmask);
         ca = _mm_cmpeq_epi8(ca,andmask);
         ca = _mm_and_si128(ca,allones);
-        _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
+        _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
         //ca=_mm_srli_si128 (ca, 4);
-        //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
+        //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
         //ca=_mm_srli_si128 (ca, 4);
-        //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
+        //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
         //ca=_mm_srli_si128 (ca, 4);
-        //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
-         _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask2));
-         _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask3));
-         _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask4));
+        //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask1));
+         _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask2));
+         _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask3));
+         _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,finalshufmask4));
     }
 }
 
@@ -84,13 +82,13 @@ static void simdhunpack1(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_1);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_1);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_1);
     ca = _mm_mullo_epi32(ca, multi2_1);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_1);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_2 = {-9187202500191551488, -9187202500191551488};
@@ -110,13 +108,13 @@ static void simdhunpack2(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_2);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_2);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_2);
     ca = _mm_mullo_epi32(ca, multi2_2);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_2);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_3 = {-9187202500191551488, -9187202495896616704};
@@ -136,13 +134,13 @@ static void simdhunpack3(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_3);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_3);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_3);
     ca = _mm_mullo_epi32(ca, multi2_3);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_3);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 // Did not get good results with this:
@@ -165,7 +163,7 @@ static  void simdhunpack4(const uint8_t *  in,uint32_t *  out) {
     const static __m128i shufmid8_4 =  _mm_set_epi8 (-128, -128, -128, 15, -128,
 -128, -128, 13, -128, -128, -128, 14, -128, -128, -128, 12);
     for (uint32_t j = 0; j<4;++j) {
-        const __m128i ba = _mm_load_si128(reinterpret_cast<const __m128i*>(in +
+        const __m128i ba = _mm_loadu_si128(reinterpret_cast<const __m128i*>(in +
 16 * j));
         __m128i ca = _mm_srli_epi16(ba,4);
         ca = _mm_shuffle_epi8(ca,shuf8);
@@ -176,26 +174,26 @@ static  void simdhunpack4(const uint8_t *  in,uint32_t *  out) {
        altca = _mm_shuffle_epi8(altca,shuf8);
        altca = _mm_blend_epi16 (altba, altca,170);
        altca =  _mm_and_si128(altca,shufoneoutoftwo);
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
        //ca=_mm_srli_si128 (ca, 4);
        //altca=_mm_srli_si128 (altca, 4);
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
        //ca=_mm_srli_si128 (ca, 4);
        //altca=_mm_srli_si128 (altca, 4);
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
        //ca=_mm_srli_si128 (ca, 4);
        //altca=_mm_srli_si128 (altca, 4);
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
-       //_mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_2) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_2) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_3) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_3) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_4) );
-       _mm_store_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_4) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_1) );
+       //_mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_1) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_2) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_2) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_3) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_3) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(ca,shufmid8_4) );
+       _mm_storeu_si128(pCurr++ , _mm_shuffle_epi8(altca,shufmid8_4) );
     }
 }
 
@@ -218,13 +216,13 @@ static void simdhunpack4(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_4);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_4);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_4);
     ca = _mm_mullo_epi32(ca, multi2_4);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_4);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_5 = {-9187342138168279040, -9187341034361683967};
@@ -244,13 +242,13 @@ static void simdhunpack5(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_5);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_5);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_5);
     ca = _mm_mullo_epi32(ca, multi2_5);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_5);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_6 = {-9187342138168279040, -9187202491601649151};
@@ -270,13 +268,13 @@ static void simdhunpack6(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_6);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_6);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_6);
     ca = _mm_mullo_epi32(ca, multi2_6);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_6);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_7 = {-9187342138168279040, -9187339930555121151};
@@ -296,13 +294,13 @@ static void simdhunpack7(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_7);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_7);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_7);
     ca = _mm_mullo_epi32(ca, multi2_7);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_7);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_8 = {-9187202495896584192, -9187202487306649598};
@@ -314,10 +312,10 @@ static void simdhunpack8(const uint8_t *in, uint32_t *out) {
   for (uint32_t j = 0; j < 16; ++j) {
     __m128i ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j));
     ca = _mm_shuffle_epi8(ca, shufkey1_8);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_8);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_9 = {-9187341034361716480, -9187338826748525822};
@@ -337,13 +335,13 @@ static void simdhunpack9(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_9);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_9);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_9);
     ca = _mm_mullo_epi32(ca, multi2_9);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_9);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_10 = {-9187341034361716480, -9187338826748525822};
@@ -363,13 +361,13 @@ static void simdhunpack10(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_10);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_10);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_10);
     ca = _mm_mullo_epi32(ca, multi2_10);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_10);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_11 = {-9187341034361716480, -9187337722950057214};
@@ -389,13 +387,13 @@ static void simdhunpack11(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_11);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_11);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_11);
     ca = _mm_mullo_epi32(ca, multi2_11);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_11);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_12 = {-9187341034361716480, -9187337722941930493};
@@ -415,13 +413,13 @@ static void simdhunpack12(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_12);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_12);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_12);
     ca = _mm_mullo_epi32(ca, multi2_12);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_12);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_13 = {-9222525406450548480, -9221677670100630525};
@@ -441,13 +439,13 @@ static void simdhunpack13(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_13);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_13);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_13);
     ca = _mm_mullo_epi32(ca, multi2_13);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_13);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_14 = {-9222525406450548480, -9187336619143396349};
@@ -467,13 +465,13 @@ static void simdhunpack14(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_14);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_14);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_14);
     ca = _mm_mullo_epi32(ca, multi2_14);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_14);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_15 = {-9222525406450548480, -9221395091325385725};
@@ -493,13 +491,13 @@ static void simdhunpack15(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_15);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_15);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_15);
     ca = _mm_mullo_epi32(ca, multi2_15);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_15);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_16 = {-9187339930555121408, -9187335515328740092};
@@ -511,10 +509,10 @@ static void simdhunpack16(const uint8_t *in, uint32_t *out) {
   for (uint32_t j = 0; j < 16; ++j) {
     __m128i ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j));
     ca = _mm_shuffle_epi8(ca, shufkey1_16);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_16);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_17 = {-9222242827675500288, -9221112512542014204};
@@ -534,13 +532,13 @@ static void simdhunpack17(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_17);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_17);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_17);
     ca = _mm_mullo_epi32(ca, multi2_17);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_17);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_18 = {-9222242827675500288, -9221112512542014204};
@@ -560,13 +558,13 @@ static void simdhunpack18(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_18);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_18);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_18);
     ca = _mm_mullo_epi32(ca, multi2_18);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_18);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_19 = {-9222242827675500288, -9220829935788751612};
@@ -586,13 +584,13 @@ static void simdhunpack19(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_19);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_19);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_19);
     ca = _mm_mullo_epi32(ca, multi2_19);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_19);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_20 = {-9222242827675500288, -9220829933758642683};
@@ -612,13 +610,13 @@ static void simdhunpack20(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_20);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_20);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_20);
     ca = _mm_mullo_epi32(ca, multi2_20);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_20);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_21 = {361417179368915200, 723118043475412485};
@@ -638,13 +636,13 @@ static void simdhunpack21(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_21);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_21);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_21);
     ca = _mm_mullo_epi32(ca, multi2_21);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_21);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_22 = {361417179368915200, -9220547356988602875};
@@ -664,13 +662,13 @@ static void simdhunpack22(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_22);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_22);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_22);
     ca = _mm_mullo_epi32(ca, multi2_22);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_22);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_23 = {361417179368915200, 795458214283380229};
@@ -690,13 +688,13 @@ static void simdhunpack23(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_23);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_23);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_23);
     ca = _mm_mullo_epi32(ca, multi2_23);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_23);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_24 = {-9221960248892194560, -9220264776191965434};
@@ -708,10 +706,10 @@ static void simdhunpack24(const uint8_t *in, uint32_t *out) {
   for (uint32_t j = 0; j < 16; ++j) {
     __m128i ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j));
     ca = _mm_shuffle_epi8(ca, shufkey1_24);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_24);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_25 = {433757350092996864, 867798387121456902};
@@ -731,13 +729,13 @@ static void simdhunpack25(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_25);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_25);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_25);
     ca = _mm_mullo_epi32(ca, multi2_25);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_25);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_26 = {433757350092996864, 867798387121456902};
@@ -757,13 +755,13 @@ static void simdhunpack26(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_26);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_26);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_26);
     ca = _mm_mullo_epi32(ca, multi2_26);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_26);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_27 = {433757350092996864, 940138559942690566};
@@ -784,14 +782,14 @@ static void simdhunpack27(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_27);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_27);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_27);
     ca = _mm_blend_epi16(ca, _mm_slli_epi64(ca, 1), 12);
     ca = _mm_mullo_epi32(ca, multi2_27);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_27);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_28 = {433757350092996864, 940138559959533575};
@@ -811,13 +809,13 @@ static void simdhunpack28(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_28);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_28);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_28);
     ca = _mm_mullo_epi32(ca, multi2_28);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_28);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey2_29 = {506097522914230528, 1012478732780767239};
@@ -843,14 +841,14 @@ static void simdhunpack29(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_29);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_29);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_29);
     ca = _mm_blend_epi16(ca, _mm_srli_epi64(ca, 4), 51);
     ca = _mm_mullo_epi32(ca, multi2_29);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_29);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 const static __m128i shufkey1_30 = {433757350092996864, 1012478732780767239};
@@ -873,7 +871,7 @@ static void simdhunpack30(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi1_30);
     ca = _mm_srli_epi32(ca, shift1);
     ca = _mm_and_si128(ca, mask_30);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     tmp =
         _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(tmp, shufkey2_30);
@@ -882,7 +880,7 @@ static void simdhunpack30(const uint8_t *in, uint32_t *out) {
     ca = _mm_mullo_epi32(ca, multi2_30);
     ca = _mm_srli_epi32(ca, shift2);
     ca = _mm_and_si128(ca, mask_30);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 
@@ -897,7 +895,7 @@ static void simdhunpack31(const uint8_t *in, uint32_t *out) {
     ca = _mm_blend_epi16(ca, _mm_srli_epi64(_mm_slli_si128(tmp, 1), 6), 48);
     ca = _mm_blend_epi16(ca, _mm_slli_epi64(tmp, 3), 192);
     ca = _mm_and_si128(ca, mask);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     tmp =
         _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_blend_epi16(_mm_srli_epi64(tmp, 4),
@@ -905,7 +903,7 @@ static void simdhunpack31(const uint8_t *in, uint32_t *out) {
     ca = _mm_blend_epi16(ca, _mm_srli_epi64(tmp, 2), 48);
     ca = _mm_blend_epi16(ca, _mm_srli_epi64(tmp, 1), 192);
     ca = _mm_and_si128(ca, mask);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 
@@ -918,10 +916,10 @@ static void simdhunpack32(const uint8_t *in, uint32_t *out) {
   for (uint32_t j = 0; j < 16; ++j) {
     __m128i ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j));
     ca = _mm_shuffle_epi8(ca, shufkey1_32);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
     ca = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in + b * j + b / 2));
     ca = _mm_shuffle_epi8(ca, shufkey2_32);
-    _mm_store_si128(pCurr++, ca);
+    _mm_storeu_si128(pCurr++, ca);
   }
 }
 
@@ -1062,7 +1060,7 @@ void simdhunpack(const uint8_t *in, uint32_t *out, uint32_t bit) {
   default:
     break;
   }
-  throw logic_error("number of bits is unsupported");
+  throw std::logic_error("number of bits is unsupported");
 }
 
-} // namespace FastPFor
+} // namespace FastPForLib

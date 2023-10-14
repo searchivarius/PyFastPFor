@@ -29,7 +29,7 @@ sudo apt-get install python3-dev
 
 # Documentation
 
-The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by Feb 2018. To get a list of codecs, use the function ``getCodecList``. 
+The library supports all the codecs implemented in the original [FastPFor](https://github.com/lemire/FastPFor) library by July 2023. To get a list of codecs, use the function ``getCodecList``. 
 
 Typical light-weight compression does not take context into account and, consequently, works well only for small integers. When integers are large, data differencing is a common trick to make integers small. In particular, we often deal with sorted lists of integers, which can be represented by differences between neighboring numbers. 
 

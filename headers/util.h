@@ -6,8 +6,8 @@
  * and Owen Kaser
  */
 
-#ifndef UTIL
-#define UTIL
+#ifndef UTIL_H_
+#define UTIL_H_
 #include "common.h"
 
 #ifdef __linux__
@@ -19,17 +19,17 @@ namespace FastPForLib {
 //#define STATS
 // taken from stackoverflow
 #ifndef NDEBUG
-#define ASSERT(condition, message)                                             \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      std::cerr << "Assertion `" #condition "` failed in " << __FILE__         \
-                << " line " << __LINE__ << ": " << message << std::endl;       \
-      std::exit(EXIT_FAILURE);                                                 \
-    }                                                                          \
+#define ASSERT(condition, message) /* message is an std::string */  \
+  do {                                                              \
+    if (!(condition)) {                                             \
+      fprintf(stderr, "Assertion `%s` failed in %s line %d : %s\n", \
+        #condition, __FILE__, __LINE__, (message).c_str());         \
+      std::exit(EXIT_FAILURE);                                      \
+    }                                                               \
   } while (false)
 #else
-#define ASSERT(condition, message)                                             \
-  do {                                                                         \
+#define ASSERT(condition, message)                                  \
+  do {                                                              \
   } while (false)
 #endif
 
@@ -60,11 +60,6 @@ __attribute__((const)) const T *padTo64bits(const T *inbyte) {
                                      ~7);
 }
 
-template <class T> __attribute__((const)) T *padTo128bits(T *inbyte) {
-  return reinterpret_cast<T *>((reinterpret_cast<uintptr_t>(inbyte) + 15) &
-                               ~15);
-}
-
 template <class T>
 __attribute__((const)) const T *padTo128bits(const T *inbyte) {
   return reinterpret_cast<const T *>(
@@ -92,11 +87,6 @@ __attribute__((const)) bool needPaddingTo64Bits(const T *inbyte) {
   return (reinterpret_cast<uintptr_t>(inbyte) & 7) != 0;
 }
 
-template <class T>
-__attribute__((const)) bool needPaddingTo128Bits(const T *inbyte) {
-  return (reinterpret_cast<uintptr_t>(inbyte) & 15) != 0;
-}
-
 template <class T> bool needPaddingTo64bytes(const T *inbyte) {
   return (reinterpret_cast<uintptr_t>(inbyte) & 63) != 0;
 }
@@ -114,10 +104,35 @@ __attribute__((const)) inline uint32_t gccbits(const uint32_t v) {
 #endif
 }
 
+__attribute__((const)) inline uint32_t gccbits(const uint64_t v) {
+  if (v == 0) {
+    return 0;
+  }
+#ifdef _MSC_VER
+  unsigned long index;
+  #ifdef _WIN64
+    _BitScanReverse64(&index, v);
+    return static_cast<uint32_t>(index + 1);
+  #else
+    if (v >> 32 == 0) {
+      _BitScanReverse(&index, (uint32_t)v);
+      return static_cast<uint32_t>(index + 1);
+    } else {
+      _BitScanReverse(&index, (uint32_t)(v >> 32));
+      return static_cast<uint32_t>(index + 32 + 1);
+    }
+  #endif
+#else
+  uint32_t answer;
+  __asm__("bsr %1, %0;" : "=r"(answer) : "r"(v));
+  return answer + 1;
+#endif
+}
+
 #ifdef _MSC_VER
 // taken from
 // http://stackoverflow.com/questions/355967/how-to-use-msvc-intrinsics-to-get-the-equivalent-of-this-gcc-code
-uint32_t __builtin_clz(uint32_t x) {
+inline uint32_t __builtin_clz(uint32_t x) {
   unsigned long r = 0;
   _BitScanReverse(&r, x);
   return (31 - r);
@@ -149,16 +164,10 @@ container diffs(const container &in, const bool aredistinct) {
 
 inline void checkifdivisibleby(size_t a, uint32_t x) {
   if (!divisibleby(a, x)) {
-    std::ostringstream convert;
-    convert << a << " not divisible by " << x;
-    throw std::logic_error(convert.str());
+    std::string msg = std::to_string(a) + " not divisible by "
+                    + std::to_string(x);
+    throw std::logic_error(msg);
   }
-}
-
-template <class iter> void printme(iter i, iter b) {
-  for (iter j = i; j != b; ++j)
-    std::cout << *j << " ";
-  std::cout << std::endl;
 }
 
 __attribute__((const)) inline uint32_t asmbits(const uint32_t v) {
@@ -170,6 +179,17 @@ __attribute__((const)) inline uint32_t asmbits(const uint32_t v) {
   uint32_t answer;
   __asm__("bsr %1, %0;" : "=r"(answer) : "r"(v));
   return answer + 1;
+#endif
+}
+
+__attribute__((const)) inline uint32_t asmbits(const uint64_t v) {
+#ifdef _MSC_VER
+  return gccbits(v);
+#else
+  if (v == 0) return 0;
+  uint64_t answer;
+  __asm__("bsr %1, %0;" : "=r"(answer) : "r"(v));
+  return static_cast<uint32_t>(answer + 1);
 #endif
 }
 
@@ -200,8 +220,7 @@ __attribute__((const)) inline uint32_t bits(uint32_t v) {
     v >>= 2;
     r += 2;
   }
-  if (v >= (1U << 0)) {
-    v >>= 1;
+  if (v >= 1U) {
     r += 1;
   }
   return r;
@@ -381,7 +400,7 @@ public:
     if (sum == 0)
       return;
     for (size_t k = 0; k < histo.size(); ++k) {
-      std::cout << prefix << k << " " << histo[k] / sum << std::endl;
+      printf("%s%zu %f\n", prefix.c_str(), k, histo[k] / sum);
     }
   }
   template <class container> void eatIntegers(const container &rawdata) {
@@ -402,6 +421,6 @@ public:
   }
 };
 
-} // namespace FastPFor
+} // namespace FastPForLib
 
-#endif
+#endif /* UTIL_H_ */
