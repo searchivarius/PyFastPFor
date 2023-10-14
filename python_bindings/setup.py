@@ -4,7 +4,7 @@ from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
 
-__version__ = '1.3.6'
+__version__ = '1.4.0'
 
 maindir = os.path.join(".", "fastpfor")
 library_file = os.path.join(maindir, "libFastPFor.a")
